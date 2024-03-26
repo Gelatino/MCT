@@ -1,0 +1,43 @@
+html, body {
+    background-color: #add8e6; /* Light blue background */
+/*    min-height: 10000vh;*/
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scrolling caused by moving clouds */
+}
+
+
+#balloon {
+    width: 300px; /* Adjust based on your image size */
+    height: 450px; /* Adjust based on your image size */
+    background-image: url('images/MCTLogo.png'); /* Path to your balloon image */
+    background-size: cover;
+    position: absolute; 
+    left: 50%;
+    top:10%;
+    transform: translate(-50%, -50%);
+    animation: float 5s ease-in-out infinite;
+    z-index: 2; 
+}
+
+
+.clouds {
+    width: 547px; /* Adjust based on your cloud image size */
+    height: 198px; /* Adjust based on your cloud image size */
+    background-image: url('images/Cloud1.png'); /* Path to your cloud image */
+    background-size: cover;
+    position: absolute;
+    left:100%;
+    animation: moveClouds 20s linear infinite;
+}
+
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) translateX(-50%); }
+    50% { transform: translateY(-20px) translateX(-50%); }
+}
+
+@keyframes moveClouds {
+     0% { left: 100%; } /* Start off-screen to the right */
+    100% { left: -100%; } /* End off-screen to the left */
+}
