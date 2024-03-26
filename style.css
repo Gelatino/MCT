@@ -1,8 +1,8 @@
 html, body {
     background-color: #add8e6; /* Light blue background */
-/*    min-height: 10000vh;*/
     margin: 0;
     padding: 0;
+     padding-bottom: 100px; 
     overflow-x: hidden; /* Prevent horizontal scrolling caused by moving clouds */
 }
 
@@ -41,3 +41,105 @@ html, body {
      0% { left: 100%; } /* Start off-screen to the right */
     100% { left: -100%; } /* End off-screen to the left */
 }
+
+.spacer {
+    height: 100vh; /* 100% of the viewport height */
+}
+
+#tourGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns grid */
+    gap: 80px; /* Space between grid items */
+    text-align: center; /* Center the text */
+    max-width: 600px; /* Maximum width of the grid */
+    margin: auto; /* Center the grid horizontally */
+    top:100%;
+}
+
+.tour-image {
+    margin: auto; /* Center the circle horizontally */
+    width: 150px; /* Size of the circle */
+    height: 150px; /* Size of the circle */
+    background-color: black; /* Circle color */
+    border-radius: 50%; /* Make it round */
+}
+
+.tour-info h3, .tour-info p {
+    margin: 0; /* Remove default margins */
+    padding: 5px 0; /* Add some spacing */
+    font-family: lato-regular;
+}
+
+.tour-header {
+    text-align:center; 
+    padding-top:20px;
+    font-family:lato-regular
+}
+.tour-header h1{
+    font-size:100px;
+}
+
+.tour {
+    padding: 20px 0; /* Space above and below each tour item */
+}
+
+.lato-thin {
+  font-family: "Lato", sans-serif;
+  font-weight: 100;
+  font-style: normal;
+}
+
+.lato-light {
+  font-family: "Lato", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.lato-regular {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.lato-bold {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.lato-black {
+  font-family: "Lato", sans-serif;
+  font-weight: 900;
+  font-style: normal;
+}
+
+.lato-thin-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 100;
+  font-style: italic;
+}
+
+.lato-light-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.lato-regular-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.lato-bold-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.lato-black-italic {
+  font-family: "Lato", sans-serif;
+  font-weight: 900;
+  font-style: italic;
+}
+
