@@ -35,4 +35,4 @@ setTimeout(() => {
             behavior: 'smooth'
         });
     }
-}, 5000); // Delay of 5 seconds
+}, 8000); // Delay of 5 seconds
