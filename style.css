@@ -1,5 +1,6 @@
 html, body {
-    background-color: #add8e6; /* Light blue background */
+    background-image: linear-gradient(to bottom, rgba(138, 157, 194), rgba(177, 95, 159));
+/*    background-attachment: fixed;*/
     margin: 0;
     padding: 0;
      padding-bottom: 100px; 
