@@ -71,7 +71,7 @@ html, body {
     height: 150px; /* Size of the circle */
     background-color: white; /* Circle color */
     border-radius: 50%; /* Make it round */
-    padding: 10px;
+    padding: 5px;
 }
 
 .tour-info h3, .tour-info p {
