@@ -1,0 +1,46 @@
+Round,Game,Question,Answer,Options,Hint,Points,Image,Time
+1,trivia,What did she want to be when she was a child?,PRESIDENT OF HONDURAS,VETERINARIAN|PRESIDENT OF HONDURAS|PRINCESS,It's not VETERINARIAN,2,,
+1,trivia,What was her very first job?,PROJECT MANAGER,WAITRESS|PROJECT MANAGER|QUINCEANERA HOST|BAKER,It's not WAITRESS,2,,
+1,trivia,What did she study?,Biomedical Engineering,Mechanical Engineering|Biomedical Engineering|Mechatronics Engineering|Clinical Engineering,It's not Mechanical Engineering,2,,
+1,trivia,Which year is this photo?,2015,2012|2017|2015|2020,,1,Aneth_1.jpg,
+1,trivia,In which French town did Van Gogh paint his famous Sunflowers?,ARLES,PARIS|ARLES|AUVERS-SUR-OISE|NICE,It's not PARIS,2,,
+1,trivia,What is the most used nickname for her in her family?,Pelusa,Princesa|Pelusa|Dumbo|Mami,It's not PRINCESA,2,,
+1,trivia,"Which famous artist made thousands of ceramic pieces in Vallauris, France?",PABLO PICASSO,SALVADOR DALÍ|JOAN MIRÓ|PABLO PICASSO|HENRI MATISSE,It's not SALVADOR DALÍ,2,,
+1,trivia,"When a potter says ""cone 10"", what are they talking about?",KILN TEMPERATURE,CLAY WEIGHT|KILN TEMPERATURE|GLAZE THICKNESS|WHEEL SPEED,It's not CLAY WEIGHT,2,,
+1,trivia,Where did she meet her husband?,ATHENS,BERLIN|SAINT PETERSBURG|SANTORINI|ATHENS,It's not BERLIN,2,,
+1,trivia,What is her favorite country she has visited?,PUERTO RICO,PUERTO RICO|SPAIN|MEXICO|SWEDEN,It's not SPAIN,2,,
+1,trivia,Which celebrity was her teenage crush?,MICHAEL BALLACK,BRAD PITT|PAUL RUDD|MICHAEL BALLACK,It's not BRAD PITT,2,,
+1,trivia,Which RHCP song would she sing at karaoke?,CAN‘T STOP,SNOW|DANI CALIFORNIA|CAN‘T STOP|CALIFORNICATION,It's not SNOW,2,,
+1,trivia,What is her go-to drink at a party?,Mojito,Moscow Mule|Espresso Martini|Mojito|Vodka Soda,It's not Moscow Mule,2,,
+1,trivia,What would she buy first if she won the lottery?,Apartment in Berlin,Apartment in Berlin|Pottery Studio|House on the Beach,It's not Pottery Studio,2,,
+1.2,chaos,"Who painted ""The Garden of Earthly Delights""?",HIERONYMUS BOSCH,,Starts with H,3,,
+2,hangman,Wedgwood's famous matte blue pottery with white reliefs is called...,JASPERWARE,JASPERWARE|CREAMWARE|BONE CHINA|BASALT WARE,It's not CREAMWARE,2,,
+2,hangman,Her guilty pleasure TV show,LOVE IS BLIND,,Starts with L,3,,
+2,hangman,Her favorite flower,SUNFLOWER,,Starts with S,3,,
+2,hangman,Her favorite fruit,WATERMELON,,Starts with W,3,,
+3,price,How much does item 1 on the table cost?,,,,3,,
+3,price,How much does item 2 on the table cost?,,,,3,,
+3,price,How much does item 3 on the table cost?,,,,3,,
+3.1,chaos,What is the national bird of Honduras?,SCARLET MACAW,,Starts with S,3,,
+4,scramble,Her perfect Sunday starts with...,CAFECITO,,Starts with C,2,,
+4,scramble,The German town that made Europe's first true porcelain (1710),MEISSEN,,Starts with M,2,,
+5,or,In which city was she born?,SAN PEDRO SULA,TEGUCIGALPA|SAN PEDRO SULA,,2,,
+5,or,Her favorite food,PUPUSAS,TACOS|PUPUSAS,,2,,
+5,or,Which food does she hate the most?,PEANUTS,PINEAPPLE|PEANUTS,,2,,
+5,or,"Who said ""I love you"" first: she or her husband?",ANETH,ANETH|RAIK,,2,,
+5,or,What is her most embarrassing moment as a kid (that she lets us share)?,PEED HERSELF IN FRONT OF THE WHOLE CLASSROOM,PEED HERSELF IN FRONT OF THE WHOLE CLASSROOM|SHE FELL IN FRONT OF HER CRUSH,,2,,
+6,find,Bring something GREEN (her favorite color)!,,,,3,,60
+6,find,Find a photo of the birthday girl and Raik!,,,,3,,120
+6.1,chaos,In which Berlin museum can you see the bust of Nefertiti?,NEUES MUSEUM,,Starts with N,3,,
+7,count,How many time zones does Russia have?,11,7|9|11|13,It's not 7,2,,
+7,count,How many languages does she speak?,4,3|4|5,It's not 3,2,,
+7,count,"How tall is the Berlin TV Tower (Fernsehturm), in meters?",368,298|368|421|456,It's not 298,2,,
+7,count,How many blueberry magnets are there on the blue lamp?,23,,,3,,60
+7,count,How many limes do you think she added to the key lime pie today?,12,,,3,,60
+7,count,Roughly how many soldiers are in China's Terracotta Army?,"8,000",800|2000|8000|20000,It's not 800,2,terracota.webp,
+7,count,How many pottery pieces does she have ready to sell for her markets in December?,85,,,3,,90
+7,count,"Leonardo's ""Salvator Mundi"" is the most expensive painting ever sold (2017). How much did it go for, in millions of US dollars?",450.3,,,3,Salvator_Mundi.jpg,60
+7,count,"A small Chinese bowl from the Song dynasty (Ru ware, about 13 cm) sold at Sotheby's Hong Kong in 2017. How much, in millions of US dollars?",37.7,,,3,,60
+7,count,"In 1987 a Japanese company bought one of Van Gogh's Sunflowers paintings. How much did it pay, in millions of US dollars?",39.9,,,3,,60
+7,count,"How much did the very first iPhone (4 GB) cost when it launched in 2007, in US dollars?",499,,,3,,60
+7,count,"How much did the first Apple Macintosh cost in 1984, in US dollars?",2495,,,3,,60

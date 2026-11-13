@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Birthday Party Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a TV-first host console. Big stage on the left, live scoreboard on the right, glaze colors from a potter's kiln. */
+:root{
+  --bg:#0f1d33;
+  --panel:#172a48;
+  --panel-2:#1e355a;
+  --line:#2c4670;
+  --ink:#f4efe4;
+  --muted:#a3b3cb;
+  --accent:#eaa33c;   /* shino amber */
+  --celadon:#8fcbb1;
+  --good:#7fd69c;
+  --bad:#f27b6b;
+  --display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.45;
+  background-image:radial-gradient(1200px 600px at 85% -10%, #1d3a66 0%, transparent 60%),radial-gradient(900px 500px at -10% 110%, #173b44 0%, transparent 55%);}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+#app{height:100%}
+
+/* buttons */
+.btn{border:1px solid var(--line);background:var(--panel-2);border-radius:10px;padding:9px 14px;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:transform .08s, background .15s}
+.btn:hover{background:#26426d}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1b1408}
+.btn.primary:hover{background:#f4b55a}
+.btn.ghost{background:transparent}
+.btn.big{padding:14px 22px;font-size:19px;border-radius:12px}
+.btn.danger{border-color:#7a3a35;color:#ffb4a9}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.icon-btn{width:38px;height:38px;justify-content:center;padding:0;font-size:20px}
+
+/* setup */
+.setup{max-width:1200px;margin:0 auto;padding:28px 20px 60px;display:grid;gap:22px}
+.setup-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.setup-head h1{font-size:44px;font-weight:800}
+.setup-head h1 span{color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:start}
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;display:grid;gap:14px}
+.card h2{font-size:22px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.field{background:#0f203b;border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-width:0}
+.field:focus{border-color:var(--accent);outline:none}
+.grow{flex:1}
+textarea.field{width:100%;min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.status{font-size:14px;padding:8px 12px;border-radius:8px;background:#0f203b;border:1px solid var(--line)}
+.status.ok{border-color:#2f6b4a;color:var(--good)}
+.status.err{border-color:#7a3a35;color:#ffb4a9}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-size:13px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line)}
+.qlist{max-height:330px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.qlist table{width:100%;border-collapse:collapse;font-size:14px}
+.qlist td,.qlist th{padding:7px 10px;border-bottom:1px solid #22395e;text-align:left;vertical-align:top}
+.qlist th{position:sticky;top:0;background:var(--panel-2);font-weight:600}
+.team-edit{display:grid;grid-template-columns:22px 1fr 38px;gap:10px;align-items:center}
+.dot{width:22px;height:22px;border-radius:50%;border:2px solid #0006;cursor:pointer}
+.joker-edit{display:grid;grid-template-columns:60px 1fr 90px 38px;gap:10px;align-items:center}
+.joker-edit .field{width:100%}
+details summary{cursor:pointer;color:var(--muted);font-size:14px}
+.steps{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:grid;gap:4px}
+.steps b{color:var(--ink)}
+
+/* play */
+.play{height:100%;display:grid;grid-template-rows:auto 1fr;}
+.topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);background:#0d1a2ecc;flex-wrap:wrap}
+.topbar .where{display:flex;align-items:baseline;gap:12px;flex:1;min-width:200px}
+.topbar .round{font-family:var(--display);font-weight:800;font-size:22px}
+.topbar .round em{font-style:normal;color:var(--accent)}
+.topbar select{max-width:240px}
+.main{display:grid;grid-template-columns:1fr 330px;min-height:0}
+@media (max-width:1000px){.main{grid-template-columns:1fr}}
+.stage{padding:24px 28px;display:grid;grid-template-rows:1fr auto;gap:18px;min-height:0;overflow:auto}
+.stage-inner{display:grid;align-content:center;justify-items:center;gap:22px;text-align:center}
+.qtag{font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--celadon)}
+.question{font-family:var(--display);font-weight:700;font-size:clamp(28px,3.4vw,52px);line-height:1.12;max-width:26ch}
+.answer{font-family:var(--display);font-weight:800;font-size:clamp(30px,3.6vw,56px);color:var(--accent);animation:pop .35s ease-out}
+.answer-label{font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.hint{background:#2a2412;border:1px dashed var(--accent);color:#f7d9a6;padding:10px 18px;border-radius:12px;font-size:20px}
+.photo{max-width:min(720px,100%);max-height:46vh;border-radius:14px;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;background:#0c182b;min-height:120px;min-width:240px}
+.photo img{max-width:100%;max-height:46vh;display:block}
+.photo .ph{padding:24px;color:var(--muted);font-size:15px;max-width:40ch}
+.controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--line)}
+.controls .btn{padding:12px 18px}
+
+/* trivia options */
+.options{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:14px;width:min(900px,100%)}
+@media (max-width:600px){.options{grid-template-columns:1fr}}
+.opt{display:flex;gap:14px;align-items:center;text-align:left;padding:16px 18px;border-radius:14px;background:var(--panel);border:2px solid var(--line);font-size:24px;font-weight:600}
+.opt b{font-family:var(--display);width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--panel-2);color:var(--celadon);flex:none}
+.opt.correct{border-color:var(--good);background:#173d2c}
+.opt.correct b{background:var(--good);color:#0b2416}
+.opt.dim{opacity:.35}
+
+/* hangman */
+.hang{display:grid;grid-template-columns:220px 1fr;gap:30px;align-items:center;width:min(1000px,100%)}
+@media (max-width:760px){.hang{grid-template-columns:1fr;justify-items:center}}
+.pot svg{width:200px;height:220px}
+.pot .body{fill:#c9875a;stroke:#f2d3b4;stroke-width:3}
+.pot .rim{fill:#a96a42}
+.pot .crack{fill:none;stroke:#1a0f08;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity .3s}
+.pot .crack.on{opacity:1}
+.pot.broken .body{fill:#8a4a3a;animation:shake .5s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.lives{font-weight:700;color:var(--muted);margin-top:6px}
+.word{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:18px}
+.word .w{display:flex;gap:8px}
+.slot{width:48px;height:62px;border-bottom:4px solid var(--celadon);font-family:var(--display);font-weight:800;font-size:42px;display:grid;place-items:center}
+.slot.rev{color:var(--accent)}
+.slot.sym{border-bottom-color:transparent}
+.keys{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;max-width:640px;margin:0 auto}
+.key{width:44px;height:46px;border-radius:9px;border:1px solid var(--line);background:var(--panel-2);font-weight:700;font-size:19px}
+.key.hit{background:#1d4a36;border-color:var(--good);color:var(--good)}
+.key.miss{background:#3c1f22;border-color:#7a3a35;color:#ff9c8f;text-decoration:line-through}
+.turn{display:inline-flex;align-items:center;gap:10px;padding:8px 16px;border-radius:99px;background:var(--panel);border:1px solid var(--line);font-weight:700;margin-bottom:14px}
+.turn i{width:14px;height:14px;border-radius:50%}
+.banner{font-family:var(--display);font-weight:800;font-size:30px}
+.banner.win{color:var(--good)} .banner.lose{color:var(--bad)}
+
+/* scramble */
+.tiles{display:flex;flex-wrap:wrap;gap:22px;justify-content:center}
+.tiles .w{display:flex;gap:8px}
+.tile{width:64px;height:72px;border-radius:12px;background:linear-gradient(#f3e3cb,#e1c7a3);color:#3a2414;font-family:var(--display);font-weight:800;font-size:40px;display:grid;place-items:center;box-shadow:0 5px 0 #a8845c,0 10px 20px #0005}
+.tile.fixed{background:linear-gradient(#cdeedd,#9fd3b9);box-shadow:0 5px 0 #5f9e80,0 10px 20px #0005}
+
+/* closest number */
+.guesses{display:grid;gap:10px;width:min(640px,100%)}
+.guess{display:grid;grid-template-columns:16px 1fr 170px 130px;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;text-align:left}
+.guess i{width:16px;height:16px;border-radius:50%}
+.guess input{width:100%;font-size:22px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.guess .diff{font-size:15px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.guess.best{border-color:var(--good);background:#173d2c}
+.guess.best .diff{color:var(--good);font-weight:700}
+@media (max-width:600px){.guess{grid-template-columns:16px 1fr 110px}.guess .diff{grid-column:2/4}}
+
+/* timer */
+.timer{display:inline-flex;align-items:center;gap:12px;padding:8px 10px 8px 18px;border-radius:99px;background:var(--panel);border:1px solid var(--line)}
+.timer .t{font-family:var(--display);font-weight:800;font-size:34px;font-variant-numeric:tabular-nums;min-width:3.2ch;text-align:center}
+.timer.big .t{font-size:76px}
+.timer.low .t{color:var(--bad)}
+.timer.done{animation:flash 1s infinite}
+@keyframes flash{50%{background:#5a2420}}
+.find-word{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.2em;color:var(--accent)}
+
+/* intro */
+.intro{display:grid;justify-items:center;gap:16px;text-align:center;align-content:center}
+.intro .num{font-size:18px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--celadon)}
+.intro h2{font-size:clamp(48px,6vw,96px);font-weight:800;color:var(--accent);line-height:1}
+.intro p{font-size:24px;max-width:34ch;margin:0}
+
+/* scoreboard */
+.board{border-left:1px solid var(--line);background:#0d1a2e99;padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+@media (max-width:1000px){.board{border-left:0;border-top:1px solid var(--line)}}
+.board h3{font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.team{flex:none;border-radius:12px;background:var(--panel);border:1px solid var(--line);padding:12px;display:grid;gap:10px;position:relative;overflow:hidden}
+.team::before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:var(--tc)}
+.team.lead{border-color:var(--accent)}
+.team .top{display:flex;align-items:center;gap:10px;padding-left:6px}
+.team .name{font-weight:700;font-size:18px;flex:1;min-width:0;overflow-wrap:anywhere}
+.team .score{font-family:var(--display);font-weight:800;font-size:40px;font-variant-numeric:tabular-nums;line-height:1}
+.team .score.bump{animation:pop .35s}
+.team .acts{display:flex;gap:6px;align-items:center;padding-left:6px;flex-wrap:wrap}
+.team .acts .btn{padding:5px 10px;font-size:15px}
+.award.on{background:#1d4a36;border-color:var(--good);color:var(--good)}
+.jokers{display:flex;gap:6px;padding-left:6px;flex-wrap:wrap}
+.joker{border:1px solid var(--line);background:var(--panel-2);border-radius:99px;padding:4px 10px;font-size:14px;font-weight:600;display:inline-flex;gap:6px;align-items:center}
+.joker.used{opacity:.4;text-decoration:line-through;background:transparent}
+.board .legend{font-size:13px;color:var(--muted)}
+
+/* end */
+.end{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding:30px 20px;gap:20px;position:relative;overflow:auto}
+.end h1{text-align:center;font-size:clamp(40px,5vw,76px);font-weight:800}
+.end h1 span{color:var(--accent)}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.pod{width:210px;display:grid;gap:10px;text-align:center}
+.pod .bar{border-radius:14px 14px 0 0;background:var(--tc);display:grid;place-items:start center;padding-top:14px;color:#13202f;font-family:var(--display);font-weight:800;font-size:46px}
+.pod .n{font-weight:700;font-size:22px}
+.pod .s{font-family:var(--display);font-weight:800;font-size:30px}
+.rest{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.end .row{justify-content:center}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:5}
+.toast{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--line);padding:10px 18px;border-radius:10px;z-index:9;font-weight:600}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Poster-inspired visual system: paper, ink, and hard-edged color fields. */
+:root{
+  --bg:#f4efe2;
+  --panel:#fffaf0;
+  --panel-2:#e8e0d0;
+  --line:#171717;
+  --ink:#171717;
+  --muted:#655f56;
+  --accent:#d6382d;
+  --celadon:#1e6091;
+  --good:#25734b;
+  --bad:#bd3028;
+  --display:"Archivo Black", "Arial Black", sans-serif;
+  --body:"DM Sans", "Helvetica Neue", sans-serif;
+  --r:0;
+  color-scheme:light;
+}
+body{
+  background-color:var(--bg);
+  background-image:linear-gradient(90deg,transparent 0 49.8%,#1717170b 49.8% 50%,transparent 50% 100%);
+  background-size:80px 100%;
+}
+h1,h2,h3{letter-spacing:0}
+.setup{max-width:1320px}
+.setup-head{border-bottom:4px solid var(--ink);padding-bottom:18px}
+.setup-head h1{font-size:clamp(38px,5vw,58px);line-height:1}
+.setup-head h1 span,.end h1 span{color:var(--accent)}
+.card,.team,.guess,.status,.qlist,.photo,.opt,.turn,.timer,.key,.joker,.chip{
+  border-radius:0;
+}
+.card{
+  background:var(--panel);
+  border:2px solid var(--ink);
+  box-shadow:6px 6px 0 var(--ink);
+}
+.card h2,.board h3,.answer-label,.qtag,.find-word,.intro .num{
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+.btn{
+  border:2px solid var(--ink);
+  border-radius:0;
+  background:var(--panel-2);
+  color:var(--ink);
+  box-shadow:3px 3px 0 var(--ink);
+  transition:transform .12s,box-shadow .12s,background .15s;
+}
+.btn:hover{background:#d8d0c0}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--accent);border-color:var(--ink);color:#fffaf0}
+.btn.primary:hover{background:#b92e25}
+.btn.big{border-radius:0}
+.btn.danger{border-color:var(--accent);color:var(--accent)}
+.field{
+  background:#fffdf7;
+  color:var(--ink);
+  border:1px solid #82796b;
+  border-radius:0;
+}
+.field:focus{border-color:var(--accent)}
+.status{background:#eee7d8;border:1px solid var(--ink)}
+.status.ok{border-color:var(--good);color:var(--good)}
+.status.err{border-color:var(--bad);color:var(--bad)}
+.chip{background:var(--panel-2);border:1px solid var(--ink)}
+.qlist{border:1px solid var(--ink)}
+.qlist td,.qlist th{border-bottom:1px solid #c9c0af}
+.qlist th{background:#e8e0d0;color:var(--ink)}
+.topbar{
+  background:var(--ink);
+  color:var(--bg);
+  border-bottom:4px solid var(--accent);
+}
+.topbar .muted{color:#d2cbbb}
+.topbar .round em{color:#f2c340}
+.topbar .field{background:#fffaf0;color:var(--ink)}
+.main{grid-template-columns:minmax(0,1fr) 310px}
+.stage{background:#f8f3e8}
+.question{font-weight:700}
+.answer{color:var(--accent)}
+.hint{background:#f2c340;border:2px solid var(--ink);border-radius:0;color:var(--ink)}
+.controls{border-top:2px solid var(--ink)}
+.opt{background:var(--panel);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.opt b{background:#2868a8;color:#fffaf0;border-radius:0}
+.opt.correct{background:#dce9d9;border-color:var(--good)}
+.opt.correct b{background:var(--good);color:white}
+.pot .body{fill:#e2a72e;stroke:var(--ink)}
+.pot .rim{fill:#d6382d}
+.pot .crack{stroke:var(--ink)}
+.pot.broken .body{fill:#d6382d}
+.slot{border-bottom-color:#2868a8}
+.key{background:#2868a8;color:#fffaf0;border:1px solid var(--ink);border-radius:0;box-shadow:2px 2px 0 var(--ink)}
+.key.hit{background:#25734b;color:white}
+.key.miss{background:#f0d7d1;color:#a52d25}
+.tile{border-radius:0;background:#f2c340;color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+.tile.fixed{background:#2868a8;color:white;box-shadow:4px 4px 0 var(--ink)}
+.guess{background:var(--panel);border:1px solid var(--ink)}
+.guess.best{background:#dce9d9;border-color:var(--good)}
+.timer{background:var(--ink);color:var(--bg);border:2px solid var(--ink);border-radius:0}
+.timer .btn{background:#f2c340;color:var(--ink)}
+.timer.low .t{color:#ff7768}
+.timer.done{animation:flash 1s infinite}
+@keyframes flash{50%{background:#8f241f}}
+.intro h2{color:var(--accent);font-size:clamp(52px,8vw,112px)}
+.intro p{font-size:22px}
+.board{border-left:2px solid var(--ink);background:#e8e0d0;padding:18px}
+.board h3{color:var(--muted)}
+.team{background:var(--panel);border:1px solid var(--ink);box-shadow:3px 3px 0 #17171730}
+.team.lead{border:2px solid var(--accent)}
+.team .score{color:var(--ink)}
+.award.on{background:#dce9d9;border-color:var(--good);color:var(--good)}
+.winner-mark{color:var(--good);font-size:13px;font-weight:700;text-transform:uppercase}
+.or-choices{display:flex;align-items:stretch;justify-content:center;gap:14px;width:min(900px,100%)}
+.or-choice{flex:1;min-width:0;padding:24px 18px;background:#2868a8;color:#fffaf0;border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font-family:var(--display);font-size:clamp(24px,4vw,48px);overflow-wrap:anywhere}
+.or-choice.correct{background:#25734b}
+.or-word{align-self:center;color:var(--accent);font-family:var(--display);font-size:20px}
+.or-status,.chaos-status{background:var(--panel-2);border-left:5px solid var(--accent);padding:10px 14px;font-weight:700}
+.chaos-status{font-size:16px}
+.joker-menu{padding-left:6px}
+.joker-menu summary{cursor:pointer;list-style:none;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase}
+.joker-menu summary::-webkit-details-marker{display:none}
+.joker-menu summary::after{content:" +";color:var(--accent)}
+.joker-menu[open] summary::after{content:" −"}
+.joker-menu .jokers{padding-left:0;margin-top:8px}
+.joker{background:var(--panel-2);border:1px solid var(--ink)}
+.end{background:var(--bg)}
+.pod .bar{border-radius:0 0 0 0;border:2px solid var(--ink);border-bottom:0}
+.rest .chip{background:var(--panel);border:1px solid var(--ink)}
+.toast{background:var(--ink);color:var(--bg);border:2px solid var(--accent);border-radius:0}
+@media(max-width:1000px){
+  .board{border-left:0;border-top:2px solid var(--ink)}
+}
+@media(max-width:600px){
+  .setup{padding:20px 16px 40px}
+  .card{padding:16px;box-shadow:4px 4px 0 var(--ink)}
+  .topbar{padding:10px 12px}
+  .stage{padding:20px 16px}
+  .or-choices{gap:8px}
+  .or-choice{padding:18px 10px}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<canvas id="confetti" hidden></canvas>
+<script>
+(function(){
+"use strict";
+
+/* ---------- constants ---------- */
+const STORE_KEY = "bdquiz.v1";
+const DEFAULT_SHEET = "https://docs.google.com/spreadsheets/d/1UQt6ASEEZnTbt0VeJ_ZLrmOKD5Ehrx90DRoRGzxM5FA/edit";
+const TEAM_COLORS = ["#d6382d","#2868a8","#e2a72e","#25734b","#bb4670","#6548a5","#168c91","#343434"];
+const MAX_WRONG = 7;
+const GAMES = {
+  trivia:   {name:"Trivia",              rules:"Read the question and write down your answer. Every team that gets it right scores."},
+  hangman:  {name:"Hangman",             rules:"Teams take turns calling a letter. A right letter means you go again. Seven wrong letters and the pot breaks! Solve the word to win the points."},
+  scramble: {name:"Scrambled Words",     rules:"Unscramble the letters. The first team to call out the right word wins the points."},
+  or:       {name:"This or That",        rules:"Ask the birthday person's preference. Mark each team that guessed correctly, then reveal the answer to split the points."},
+  chaos:    {name:"Chaos Agent",         rules:"The lowest-scoring team gets one last answer. If correct, they steal the points from the leader. Tied lowest teams all get a chance."},
+  price:    {name:"Guess the Price",     rules:"Take a good look at the piece and write down your price. The closest team wins."},
+  count:    {name:"Count It",            rules:"Go and count! Write down your number. The closest team wins."},
+  find:     {name:"Find It",             rules:"Run! The first team to bring it back wins the points."}
+};
+const COLS = ["round","game","question","answer","options","hint","points","image","time"];
+const ALIASES = {round:["round","rnd"],game:["game","type"],question:["question","q"],answer:["answer","a"],options:["options","choices"],hint:["hint","clue"],points:["points","pts","score"],image:["image","photo","picture","img"],time:["time","timer","seconds","secs"]};
+const SAMPLE = `Round,Game,Question,Answer,Options,Hint,Points,Image,Time
+1,trivia,In which year did the birthday girl make her first pottery piece?,2012,2009|2012|2015|2018,It was before she moved to this city,2,,
+1,trivia,At roughly what temperature is stoneware fired?,1250 °C,600 °C|900 °C|1250 °C|2000 °C,Hotter than a pizza oven. Much hotter.,1,,
+1,trivia,What is a glaze mostly made of?,Glass,Glass|Paint|Wax|Sugar,It becomes shiny and hard in the kiln,1,,
+1,trivia,Photo question: where was this photo taken?,Lisbon,,It's in Portugal,2,,
+2,hangman,A Japanese technique to repair broken pottery with gold,KINTSUGI,,It starts with K,3,,
+2,hangman,The birthday girl's favorite dessert,TIRAMISU,,It's Italian,3,,
+3,scramble,Where pottery gets fired,KILN,,It's a kind of oven,2,,
+3,scramble,A pottery word,CERAMICS,,It starts with C,2,,
+3,scramble,Something potters put on a piece before firing,GLAZE,,It makes pieces shiny,2,,
+4,or,Which would she choose for dinner?,Pizza,Doner|Pizza,,2,,
+4,or,Which would she rather have with coffee?,Cake,Cake|Fruit,,1,,
+5,price,"How much does the big blue vase cost? (item 1 on the table)",85,,,3,,
+5,price,"How much is the set of 4 mugs? (item 2 on the table)",120,,,3,,
+6,count,How many books are on the living room shelf?,147,,,3,,90
+6,count,How many plants are in the apartment?,23,,,3,,120
+7,find,Find something made by the birthday girl that is green!,,,,3,,90
+7,find,Bring a photo of the birthday girl as a child!,,,,3,,120
+8,chaos,What is the Japanese art of repairing pottery with gold?,Kintsugi,,,3,,
+9,chaos,What do potters call the oven used to fire clay?,Kiln,,,3,,`;
+
+/* ---------- state ---------- */
+function defaultState(){
+  return {
+    phase:"setup",
+    sheetUrl:DEFAULT_SHEET,
+    currency:"€",
+    questions:parseQuestions(SAMPLE),
+    source:"Sample questions (same as your Google Sheet template)",
+    teams:[0,1,2,3].map(i=>({name:"Team "+(i+1),color:TEAM_COLORS[i],score:0,used:{}})),
+    jokers:[
+      {id:"clue",icon:"💡",name:"Clue",cost:1,hint:true},
+      {id:"bday",icon:"🎂",name:"Ask the birthday girl",cost:1,hint:false},
+      {id:"husband",icon:"💍",name:"Ask the husband",cost:1,hint:false}
+    ],
+    idx:0,
+    qs:{}
+  };
+}
+let S;
+try{ S = JSON.parse(localStorage.getItem(STORE_KEY)); }catch(e){ S = null; }
+if(!S || !Array.isArray(S.questions)) S = defaultState();
+S.questions.forEach(q=>{ if(q.game==="finish") q.game="or"; });
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+
+function Q(){ return S.questions[S.idx]; }
+function QS(i){ i = (i==null)?S.idx:i; if(!S.qs[i]) S.qs[i]={revealed:false,resolved:false,correct:{},chaosResult:null,hint:false,letters:[],turn:0,guesses:{},awarded:{},scr:null,shown:0,introDone:false}; return S.qs[i]; }
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2600); }
+function parseNum(s){
+  s = String(s==null?"":s).replace(/[^\d,.\-]/g,"");
+  if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g,"").replace(",",".");
+  else if(s.includes(",") && !s.includes(".")) s = s.replace(",",".");
+  else s = s.replace(/,/g,"");
+  const n = parseFloat(s); return isNaN(n)?null:n;
+}
+function fmtNum(n){ return (Math.round(n*100)/100).toLocaleString(); }
+function normGame(g){
+  g = String(g||"").toLowerCase().trim();
+  if(/hang/.test(g)) return "hangman";
+  if(/scram|anagram|unscr/.test(g)) return "scramble";
+  if(/^(or|either|either\/or|this or that)$/.test(g)) return "or";
+  if(/chaos/.test(g)) return "chaos";
+  if(/price|cost/.test(g)) return "price";
+  if(/count|how many|number|estimat/.test(g)) return "count";
+  if(/find|hunt|search|bring/.test(g)) return "find";
+  return "trivia";
+}
+
+/* ---------- CSV / TSV parsing ---------- */
+function parseTable(text){
+  text = String(text||"").replace(/^﻿/,"");
+  const first = text.split(/\r?\n/)[0]||"";
+  const d = first.includes("\t") ? "\t" : ",";
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else q=false; }
+      else cell+=c;
+    }else{
+      if(c==='"' && cell==="") q=true;
+      else if(c===d){ row.push(cell); cell=""; }
+      else if(c==="\n"||c==="\r"){ if(c==="\r"&&text[i+1]==="\n") i++; row.push(cell); rows.push(row); row=[]; cell=""; }
+      else cell+=c;
+    }
+  }
+  if(cell!=="" || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(c=>String(c).trim()!==""));
+}
+function parseQuestions(text){
+  const rows = parseTable(text);
+  if(!rows.length) return [];
+  let map = {}; let start = 0;
+  const head = rows[0].map(h=>String(h).toLowerCase().trim());
+  if(head.some(h=>h==="question"||h==="answer")){
+    start = 1;
+    for(const k of COLS){ const i = head.findIndex(h=>ALIASES[k].includes(h)); if(i>=0) map[k]=i; }
+  }else{ COLS.forEach((k,i)=>map[k]=i); }
+  const get=(r,k)=> map[k]==null ? "" : String(r[map[k]]==null?"":r[map[k]]).trim();
+  const out=[];
+  for(const r of rows.slice(start)){
+    const q=get(r,"question"), a=get(r,"answer");
+    if(!q && !a) continue;
+    out.push({
+      round:get(r,"round"),
+      game:normGame(get(r,"game")),
+      q, a,
+      options:get(r,"options").split("|").map(s=>s.trim()).filter(Boolean),
+      hint:get(r,"hint"),
+      points:parseNum(get(r,"points"))||1,
+      image:get(r,"image"),
+      time:parseInt(get(r,"time"),10)||0
+    });
+  }
+  return out;
+}
+
+/* ---------- Google Sheet + CSV loading ---------- */
+function driveId(s){
+  s=String(s||"").trim();
+  let m = s.match(/\/d\/([A-Za-z0-9_-]{15,})/) || s.match(/[?&]id=([A-Za-z0-9_-]{15,})/);
+  if(m) return m[1];
+  if(/^[A-Za-z0-9_-]{25,}$/.test(s)) return s;
+  return null;
+}
+async function fetchSheetCsv(url){
+  const id=driveId(url);
+  if(!id) throw new Error("That doesn't look like a Google Sheet link. Copy the link from the browser address bar.");
+  const gid=(String(url).match(/[#&?]gid=(\d+)/)||[])[1];
+  const tries=[
+    `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv${gid?"&gid="+gid:""}`,
+    `https://docs.google.com/spreadsheets/d/${id}/export?format=csv${gid?"&gid="+gid:""}`
+  ];
+  let last;
+  for(const u of tries){
+    try{
+      const r=await fetch(u,{cache:"no-store"});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const t=await r.text();
+      if(/^\s*<(!doctype|html)/i.test(t)) throw new Error("Google asked for a login");
+      return t;
+    }catch(e){ last=e; }
+  }
+  throw new Error("Couldn't read the sheet ("+(last&&last.message||"blocked")+"). In the sheet click Share and set General access to “Anyone with the link”, then try again.");
+}
+function useQuestions(text, source){
+  const qs=parseQuestions(text);
+  if(!qs.length) throw new Error("No questions found. Check that the first row has the column names.");
+  S.questions=qs; S.source=source; S.qs={}; S.idx=0; save();
+  return qs.length;
+}
+
+/* ---------- images ---------- */
+function imgSrc(val){
+  val=String(val||"").trim();
+  const id=driveId(val);
+  if(id && /google/.test(val)) return `https://lh3.googleusercontent.com/d/${id}=w1600`;
+  if(/^(https?:|data:|blob:)/i.test(val)) return val;
+  return val.split(/[\/\\]/).map(encodeURIComponent).join("/");
+}
+function photoHtml(val){
+  const msg=`Photo “${esc(val)}” didn't load. Put it next to this page (or in its photos folder) with exactly this name, or use a Google Drive link shared with “Anyone with the link”.`;
+  return `<div class="photo"><img src="${esc(imgSrc(val))}" alt="Question photo" onerror="this.parentNode.innerHTML='<div class=ph>'+this.dataset.msg+'</div>'" data-msg="${esc(msg)}"></div>`;
+}
+
+/* ---------- timer ---------- */
+const T = {left:0,total:0,running:false,iv:null,idx:-1};
+function resetTimer(){ clearInterval(T.iv); T.running=false; T.total=(Q()&&Q().time)||0; T.left=T.total; T.idx=S.idx; }
+function toggleTimer(){
+  if(T.left<=0) T.left=T.total;
+  T.running=!T.running;
+  clearInterval(T.iv);
+  if(T.running) T.iv=setInterval(()=>{ T.left--; if(T.left<=0){ T.left=0; T.running=false; clearInterval(T.iv); beep(); } paintTimer(); },1000);
+  paintTimer();
+}
+function paintTimer(){
+  const el=$("#timer"); if(!el) return;
+  const m=Math.floor(T.left/60), s=T.left%60;
+  el.querySelector(".t").textContent=(m?m+":"+String(s).padStart(2,"0"):s);
+  el.classList.toggle("low",T.left<=10 && T.left>0);
+  el.classList.toggle("done",T.left===0 && T.total>0);
+  const b=el.querySelector("button[data-act=timer]"); if(b) b.textContent=T.running?"Pause":(T.left===0?"Restart":"Start");
+}
+let actx=null;
+function beep(){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.35,0.7].forEach(t=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type="square"; o.frequency.value=660; g.gain.value=.12; o.connect(g); g.connect(actx.destination); o.start(actx.currentTime+t); o.stop(actx.currentTime+t+0.22); });
+  }catch(e){}
+}
+
+/* ---------- game logic ---------- */
+function letterKey(ch){ return ch.toLocaleUpperCase(); }
+function isLetter(ch){ return /\p{L}|\p{N}/u.test(ch); }
+function hangInfo(q,st){
+  const word=q.a.toLocaleUpperCase();
+  const letters=new Set([...word].filter(isLetter));
+  const wrong=st.letters.filter(l=>!letters.has(l));
+  const solved=[...letters].every(l=>st.letters.includes(l));
+  return {word,letters,wrong,solved,lost:wrong.length>=MAX_WRONG};
+}
+function scramble(word){
+  const parts=word.toLocaleUpperCase().split(/\s+/).filter(Boolean);
+  return parts.map(w=>{
+    const a=[...w]; if(a.length<2) return w;
+    for(let tries=0;tries<20;tries++){
+      for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+      if(a.join("")!==w || new Set(a).size===1) break;
+    }
+    return a.join("");
+  });
+}
+function closest(q,st){
+  const target=parseNum(q.a); if(target==null) return {target:null,best:[],diffs:{}};
+  const diffs={}; let min=Infinity;
+  S.teams.forEach((t,i)=>{ const g=parseNum(st.guesses[i]); if(g!=null){ diffs[i]=Math.abs(g-target); if(diffs[i]<min) min=diffs[i]; } });
+  const best=Object.keys(diffs).filter(i=>diffs[i]===min).map(Number);
+  return {target,best,diffs};
+}
+function award(ti){
+  const st=QS(), q=Q(), t=S.teams[ti];
+  if(st.awarded[ti]){ t.score-=st.awarded[ti]; delete st.awarded[ti]; }
+  else { st.awarded[ti]=q.points; t.score+=q.points; bump(ti); }
+}
+function awardClosest(st){
+  const winners=new Set(closest(Q(),st).best);
+  S.teams.forEach((team,i)=>{ if(st.awarded[i]&&!winners.has(i)) award(i); });
+  winners.forEach(i=>{ if(!st.awarded[i]) award(i); });
+  return winners.size;
+}
+function syncOrAwards(st){
+  st.correct=st.correct||{};
+  st.awarded=st.awarded||{};
+  Object.keys(st.awarded).forEach(i=>{ S.teams[i].score-=st.awarded[i]; delete st.awarded[i]; });
+  const winners=S.teams.map((team,i)=>i).filter(i=>st.correct[i]);
+  if(!winners.length) return 0;
+  const totalCents=Math.round(Q().points*100), base=Math.floor(totalCents/winners.length), remainder=totalCents%winners.length;
+  winners.forEach((i,n)=>{ const share=(base+(n<remainder?1:0))/100; st.awarded[i]=share; S.teams[i].score+=share; bump(i); });
+  return winners.length;
+}
+function chaosStandings(){
+  const scores=S.teams.map(t=>t.score), min=Math.min(...scores), max=Math.max(...scores);
+  return {trailing:scores.map((score,i)=>score===min?i:-1).filter(i=>i>=0),leader:scores.findIndex(score=>score===max),canSteal:max>min};
+}
+function chaosSteal(ti,st){
+  if(st.chaosResult){
+    if(st.chaosResult.winner!==ti) return;
+    S.teams[st.chaosResult.winner].score-=st.chaosResult.amount;
+    S.teams[st.chaosResult.leader].score+=st.chaosResult.amount;
+    st.chaosResult=null;
+    toast("Chaos Agent steal undone");
+    return;
+  }
+  const standings=chaosStandings();
+  if(!st.revealed||!standings.canSteal||!standings.trailing.includes(ti)) return;
+  const amount=Q().points;
+  S.teams[ti].score+=amount;
+  S.teams[standings.leader].score-=amount;
+  st.chaosResult={winner:ti,leader:standings.leader,amount};
+  bump(ti);
+  toast(`${S.teams[ti].name} stole ${fmtNum(amount)} points from ${S.teams[standings.leader].name}`);
+}
+let bumped=-1; function bump(i){ bumped=i; }
+function useJoker(ti,jid){
+  const t=S.teams[ti], j=S.jokers.find(x=>x.id===jid); if(!j) return;
+  if(t.used[jid]!=null){ t.score+=j.cost; delete t.used[jid]; toast(`${j.name} given back to ${t.name}`); }
+  else{ t.score-=j.cost; t.used[jid]=S.idx; if(j.hint) QS().hint=true; toast(`${t.name} used ${j.icon} ${j.name}`+(j.cost?` (−${j.cost})`:"")); }
+}
+function isRoundStart(i){
+  if(i===0) return true;
+  const a=S.questions[i], b=S.questions[i-1];
+  return a.round!==b.round || a.game!==b.game;
+}
+function go(i){
+  if(i<0||i>=S.questions.length) return;
+  S.idx=i; resetTimer(); save(); render();
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  const app=$("#app");
+  if(S.phase==="setup") app.innerHTML=renderSetup();
+  else if(S.phase==="end") app.innerHTML=renderEnd();
+  else app.innerHTML=renderPlay();
+  paintTimer();
+  bumped=-1;
+}
+
+function renderSetup(){
+  const counts={}; S.questions.forEach(q=>counts[q.game]=(counts[q.game]||0)+1);
+  const chips=Object.keys(GAMES).filter(g=>counts[g]).map(g=>`<span class="chip">${GAMES[g].name} · ${counts[g]}</span>`).join("");
+  const rows=S.questions.map((q,i)=>`<tr><td>${esc(q.round)}</td><td>${GAMES[q.game].name}</td><td>${esc(q.q)}${q.image?' <span class="chip">photo</span>':""}</td><td>${esc(q.a)}</td><td>${q.points}</td></tr>`).join("");
+  const teams=S.teams.map((t,i)=>`<div class="team-edit">
+      <button class="dot" style="background:${t.color}" data-act="team-color" data-i="${i}" aria-label="Change color of ${esc(t.name)}"></button>
+      <input class="field" id="team-${i}" value="${esc(t.name)}" data-input="team-name" data-i="${i}" aria-label="Team ${i+1} name">
+      <button class="btn icon-btn ghost" data-act="team-del" data-i="${i}" aria-label="Remove ${esc(t.name)}" ${S.teams.length<=2?"disabled":""}>×</button>
+    </div>`).join("");
+  const jokers=S.jokers.map((j,i)=>`<div class="joker-edit">
+      <input class="field" id="jicon-${i}" value="${esc(j.icon)}" data-input="joker-icon" data-i="${i}" aria-label="Joker icon" style="text-align:center">
+      <input class="field" id="jname-${i}" value="${esc(j.name)}" data-input="joker-name" data-i="${i}" aria-label="Joker name">
+      <input class="field" id="jcost-${i}" type="number" min="0" value="${j.cost}" data-input="joker-cost" data-i="${i}" aria-label="Points it costs">
+      <button class="btn icon-btn ghost" data-act="joker-del" data-i="${i}" aria-label="Remove joker">×</button>
+    </div>`).join("");
+  const started = S.teams.some(t=>t.score) || Object.keys(S.qs).length;
+  return `<div class="setup">
+    <div class="setup-head">
+      <div><h1>Birthday <span>Quiz</span> Night</h1><div class="muted">Host setup. Load your questions, name the teams, then start the show.</div></div>
+      <div class="row">
+        ${started?`<button class="btn danger" data-act="reset" id="reset-btn">Reset scores</button>`:""}
+        <button class="btn primary big" data-act="start" ${S.questions.length?"":"disabled"}>${started?"Continue game ▶":"Start the game ▶"}</button>
+      </div>
+    </div>
+    <div class="grid2">
+      <section class="card">
+        <h2>Questions</h2>
+        <div class="row">
+          <input class="field grow" id="sheet-url" value="${esc(S.sheetUrl)}" placeholder="Google Sheet link" aria-label="Google Sheet link">
+          <button class="btn primary" data-act="load-sheet">Load from Google Sheet</button>
+        </div>
+        <div class="row">
+          <label class="btn" for="csv-input">Open a CSV file…</label>
+          <input type="file" id="csv-input" accept=".csv,.tsv,.txt,text/csv" hidden>
+          <span class="small muted">or drop the CSV anywhere on this page</span>
+        </div>
+        <div id="load-status" class="status">${esc(S.source)} · ${S.questions.length} questions</div>
+        <div class="chips">${chips}</div>
+        <div class="qlist"><table><thead><tr><th>Rd</th><th>Game</th><th>Question</th><th>Answer</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table></div>
+        <details>
+          <summary>Or paste the questions</summary>
+          <div style="display:grid;gap:10px;margin-top:10px">
+            <div class="small muted">In the sheet, select everything (Ctrl+A / Cmd+A), copy, and paste here.</div>
+            <textarea class="field" id="paste-box" placeholder="Round	Game	Question	Answer	Options	Hint	Points	Image	Time"></textarea>
+            <div class="row"><button class="btn" data-act="load-paste">Use pasted questions</button><button class="btn ghost" data-act="load-sample">Back to sample questions</button></div>
+          </div>
+        </details>
+        <details>
+          <summary>How to fill in the sheet</summary>
+          <ul class="steps" style="margin-top:10px">
+            <li><b>Game</b>: trivia, hangman, scramble, or, chaos, price, count or find. Add one or two chaos questions for comeback rounds.</li>
+            <li><b>Options</b>: trivia choices, or two choices for an or question, separated by | (example: Doner|Pizza).</li>
+            <li><b>Hint</b>: shown when a team uses the Clue joker.</li>
+            <li><b>Points</b>: points for the winner(s); or rounds split these points across correct teams, chaos rounds steal them from the leader.</li>
+            <li><b>Image</b>: a photo file name in the same folder as this page (example: photos/lisbon.jpg), or a Google Drive photo link.</li>
+            <li><b>Time</b>: seconds for the countdown (optional, great for count and find).</li>
+            <li><b>price / count</b>: put only the number in Answer. The closest guess wins.</li>
+          </ul>
+        </details>
+      </section>
+      <div style="display:grid;gap:22px">
+        <section class="card">
+          <h2>Teams</h2>
+          ${teams}
+          <div class="row"><button class="btn" data-act="team-add" ${S.teams.length>=8?"disabled":""}>+ Add team</button></div>
+        </section>
+        <section class="card">
+          <h2>Jokers</h2>
+          <div class="small muted">Each team can use every joker once. The cost is taken from their score. A joker called "Clue" shows the hint.</div>
+          ${jokers}
+          <div class="row"><button class="btn" data-act="joker-add">+ Add joker</button></div>
+        </section>
+        <section class="card">
+          <h2>Settings</h2>
+          <div class="row"><label for="currency" class="small muted">Currency for Guess the Price</label><input class="field" id="currency" value="${esc(S.currency)}" data-input="currency" style="width:70px;text-align:center"></div>
+        </section>
+      </div>
+    </div>
+  </div>`;
+}
+
+function teamBoard(){
+  const st=QS(), q=Q();
+  const max=Math.max(...S.teams.map(t=>t.score));
+  const anyScore=S.teams.some(t=>t.score!==0);
+  const standings=q.game==="chaos"?chaosStandings():null;
+  return S.teams.map((t,i)=>`<div class="team ${anyScore&&t.score===max?"lead":""}" style="--tc:${t.color}">
+    <div class="top"><div class="name">${esc(t.name)}</div><div class="score ${bumped===i?"bump":""}">${fmtNum(t.score)}</div></div>
+    <div class="acts">
+      ${q.game==="price"?(st.resolved&&st.awarded[i]?`<span class="winner-mark">Closest</span>`:""):q.game==="or"?`<button class="btn award ${st.correct&&st.correct[i]?"on":""}" data-act="mark-correct" data-i="${i}">${st.correct&&st.correct[i]?"✓ Correct":"Mark correct"}</button>`:q.game==="chaos"?(st.chaosResult?(st.chaosResult.winner===i?`<button class="btn award on" data-act="chaos-steal" data-i="${i}">Undo steal</button>`:""):standings.canSteal&&standings.trailing.includes(i)&&st.revealed?`<button class="btn primary" data-act="chaos-steal" data-i="${i}">Steal ${fmtNum(q.points)} from ${esc(S.teams[standings.leader].name)}</button>`:""):`<button class="btn award ${st.awarded[i]?"on":""}" data-act="award" data-i="${i}" title="Give this question's points">${st.awarded[i]?"✓ ":""}+${fmtNum(q.points)} correct</button>`}
+      <button class="btn icon-btn" style="width:32px;height:32px" data-act="minus" data-i="${i}" aria-label="Minus 1 point for ${esc(t.name)}">−</button>
+      <button class="btn icon-btn" style="width:32px;height:32px" data-act="plus" data-i="${i}" aria-label="Plus 1 point for ${esc(t.name)}">+</button>
+    </div>
+    <details class="joker-menu"><summary>Help · ${S.jokers.filter(j=>t.used[j.id]==null).length}</summary><div class="jokers">${S.jokers.map(j=>`<button class="joker ${t.used[j.id]!=null?"used":""}" data-act="joker" data-i="${i}" data-j="${j.id}" title="${t.used[j.id]!=null?"Used. Click to give it back":"Use "+esc(j.name)+(j.cost?" (−"+j.cost+")":"")}">${esc(j.icon)} ${esc(j.name)}</button>`).join("")}</div></details>
+  </div>`).join("");
+}
+
+function timerHtml(big){
+  if(!Q().time) return "";
+  return `<div class="timer ${big?"big":""}" id="timer"><span class="t">0</span><button class="btn primary" data-act="timer">Start</button><button class="btn ghost" data-act="timer-reset" aria-label="Reset timer">↺</button></div>`;
+}
+
+function gameHtml(){
+  const q=Q(), st=QS(), g=q.game;
+  const photo = q.image ? photoHtml(q.image) : "";
+  const hint = st.hint && q.hint ? `<div class="hint">💡 ${esc(q.hint)}</div>` : (st.hint && !q.hint ? `<div class="hint">No clue written for this question</div>` : "");
+  const ans = st.revealed && q.a ? `<div><div class="answer-label">Answer</div><div class="answer">${esc(g==="price"?q.a+" "+S.currency:q.a)}</div></div>` : "";
+
+  if(g==="trivia"){
+    let opts="", correct=-1;
+    if(q.options.length){
+      correct=q.options.findIndex(o=>o.toLowerCase()===q.a.toLowerCase());
+      opts=`<div class="options">${q.options.map((o,i)=>`<div class="opt ${st.revealed?(i===correct?"correct":"dim"):""}"><b>${"ABCDEFGH"[i]}</b>${esc(o)}</div>`).join("")}</div>`;
+    }
+    return `<div class="question">${esc(q.q)}</div>${photo}${opts}${hint}${timerHtml()}${correct>=0&&st.revealed?"":ans}`;
+  }
+  if(g==="or"){
+    const fromOptions=q.options.length>=2;
+    const choices=fromOptions?q.options.slice(0,2):q.q.split(/\s+or\s+/i).map(x=>x.replace(/[?!.]+$/g,"").trim());
+    const hasChoices=choices.length===2;
+    const prompt=fromOptions?q.q:(hasChoices?"Which would the birthday person choose?":q.q);
+    const matchesChoice=choice=>choice.trim().replace(/[?!.]+$/g,"").toLowerCase()===q.a.trim().replace(/[?!.]+$/g,"").toLowerCase();
+    const choiceHtml=hasChoices?`<div class="or-choices">${choices.map((choice,i)=>`<div class="or-choice ${st.revealed&&matchesChoice(choice)?"correct":""}">${esc(choice)}</div>${i===0?`<span class="or-word">OR</span>`:""}`).join("")}</div>`:"";
+    const correctCount=Object.values(st.correct||{}).filter(Boolean).length;
+    const result=st.resolved?`<div class="or-status">${correctCount?`${fmtNum(q.points/correctCount)} points each · ${correctCount} correct`:`No teams marked correct`}</div>`:`<div class="or-status">${fmtNum(q.points)} points shared by all correct teams</div>`;
+    return `<div class="question">${esc(prompt)}</div>${choiceHtml}${(!hasChoices||!choices.some(matchesChoice))&&st.revealed?ans:""}${result}${photo}${hint}${timerHtml()}`;
+  }
+  if(g==="chaos"){
+    const standings=chaosStandings();
+    const trailing=standings.trailing.map(i=>esc(S.teams[i].name)).join(", ");
+    const status=st.chaosResult?`${esc(S.teams[st.chaosResult.winner].name)} stole ${fmtNum(st.chaosResult.amount)} points from ${esc(S.teams[st.chaosResult.leader].name)}.`:standings.canSteal?`Trailing: ${trailing} · Leader: ${esc(S.teams[standings.leader].name)} · Stake: ${fmtNum(q.points)} points`:`Scores are tied; there is no leader to steal from.`;
+    return `<div class="qtag">Chaos Agent</div><div class="question">${esc(q.q)}</div><div class="chaos-status">${status}</div>${ans}${photo}${hint}${timerHtml()}`;
+  }
+  if(g==="hangman"){
+    const h=hangInfo(q,st); const show=st.revealed||h.lost;
+    const words=h.word.split(/\s+/).map(w=>`<div class="w">${[...w].map(ch=>isLetter(ch)
+        ? `<div class="slot ${show&&!st.letters.includes(ch)?"rev":""}">${st.letters.includes(ch)||show?esc(ch):""}</div>`
+        : `<div class="slot sym">${esc(ch)}</div>`).join("")}</div>`).join("");
+    const base=[..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]; const extra=[...h.letters].filter(l=>!base.includes(l) && !/\d/.test(l));
+    const keys=base.concat(extra).map(l=>{ const used=st.letters.includes(l); const cls=used?(h.letters.has(l)?"hit":"miss"):""; return `<button class="key ${cls}" data-act="letter" data-l="${l}" ${used||h.solved||h.lost||st.revealed?"disabled":""}>${l}</button>`; }).join("");
+    const turnTeam=S.teams[st.turn%S.teams.length];
+    const cracks=[[100,62,106,82,98,97],[140,112,128,122,132,137],[60,112,72,124,66,140],[98,97,108,120,100,142],[132,137,120,160,126,182],[66,140,80,162,74,186],[100,142,96,172,104,206]];
+    const pot=`<div class="pot ${h.lost?"broken":""}"><svg viewBox="0 0 200 220" role="img" aria-label="${h.wrong.length} of ${MAX_WRONG} cracks"><path class="body" d="M70 20 h60 v10 c0 10 -12 14 -12 26 c0 20 50 40 50 90 c0 40 -30 64 -68 64 c-38 0 -68 -24 -68 -64 c0 -50 50 -70 50 -90 c0 -12 -12 -16 -12 -26 z"/><rect class="rim" x="66" y="14" width="68" height="12" rx="5"/>${cracks.map((c,i)=>`<polyline class="crack ${h.wrong.length>i?"on":""}" points="${c.join(" ")}"/>`).join("")}</svg><div class="lives">${MAX_WRONG-h.wrong.length} wrong guesses left</div></div>`;
+    let status;
+    if(h.solved) status=`<div class="banner win">Solved! 🎉</div>`;
+    else if(h.lost) status=`<div class="banner lose">The pot broke! 💥</div>`;
+    else status=`<div class="turn"><i style="background:${turnTeam.color}"></i>Turn: ${esc(turnTeam.name)}</div>`;
+    return `<div class="question" style="font-size:clamp(24px,2.6vw,38px)">${esc(q.q)}</div>${photo}
+      <div class="hang">${pot}<div>${status}<div class="word">${words}</div><div class="keys">${keys}</div></div></div>${hint}${timerHtml()}`;
+  }
+  if(g==="scramble"){
+    if(!st.scr) st.scr=scramble(q.a);
+    const ansWords=q.a.toLocaleUpperCase().split(/\s+/).filter(Boolean);
+    let tiles;
+    if(st.revealed) tiles=ansWords.map(w=>`<div class="w">${[...w].map(c=>`<div class="tile fixed">${esc(c)}</div>`).join("")}</div>`).join("");
+    else{
+      // first `shown` letters of the answer are fixed in place, the rest stay scrambled
+      let left=st.shown;
+      tiles=ansWords.map((w,wi)=>{
+        const n=Math.min(left,w.length); left-=n;
+        const fixed=[...w].slice(0,n);
+        const pool=[...st.scr[wi]]; fixed.forEach(c=>{ const k=pool.indexOf(c); if(k>=0) pool.splice(k,1); });
+        return `<div class="w">${fixed.map(c=>`<div class="tile fixed">${esc(c)}</div>`).join("")}${pool.map(c=>`<div class="tile">${esc(c)}</div>`).join("")}</div>`;
+      }).join("");
+    }
+    return `<div class="qtag">${esc(q.q)}</div><div class="tiles">${tiles}</div>${photo}${hint}${timerHtml()}`;
+  }
+  if(g==="price"||g==="count"){
+    const c=closest(q,st);
+    const showResult=g==="price"?st.resolved:st.revealed;
+    const rowsH=S.teams.map((t,i)=>{
+      const best=showResult&&c.best.includes(i);
+      const diff=showResult&&c.diffs[i]!=null?(best?"Closest! ":"")+"off by "+fmtNum(c.diffs[i]):"";
+      return `<div class="guess ${best?"best":""}"><i style="background:${t.color}"></i><label for="guess-${i}">${esc(t.name)}</label>
+        <input class="field" id="guess-${i}" inputmode="decimal" placeholder="${g==="price"?S.currency:"#"}" value="${esc(st.guesses[i]||"")}" data-input="guess" data-i="${i}" autocomplete="off" ${g==="price"&&st.resolved?"readonly":""}>
+        <div class="diff">${diff}</div></div>`;
+    }).join("");
+    const awardBtn = g==="count"&&st.revealed&&c.best.length ? `<button class="btn primary" data-act="award-closest">Give ${q.points} pts to the closest</button>` : "";
+    return `<div class="question">${esc(q.q)}</div>${photo}${timerHtml()}<div class="guesses">${rowsH}</div>${ans}${awardBtn}${hint}`;
+  }
+  if(g==="find"){
+    return `<div class="find-word">FIND IT!</div><div class="question">${esc(q.q)}</div>${photo}${timerHtml(true)}${hint}${ans}<div class="muted">Click "+${q.points} correct" on the team that brings it first.</div>`;
+  }
+  return "";
+}
+
+function renderPlay(){
+  const q=Q(), st=QS(), info=GAMES[q.game];
+  if(T.idx!==S.idx) resetTimer();
+  const roundLabel = q.round ? `Round ${esc(q.round)} · ` : "";
+  const showIntro = isRoundStart(S.idx) && !st.introDone;
+  const jump=S.questions.map((x,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>${i+1}. ${GAMES[x.game].name}: ${esc(x.q.slice(0,40))}</option>`).join("");
+  let stage;
+  if(showIntro){
+    stage=`<div class="intro">${q.round?`<div class="num">Round ${esc(q.round)}</div>`:""}<h2>${info.name}</h2><p>${info.rules}</p><button class="btn primary big" data-act="intro-done">Start round ▶</button></div>`;
+  }else{
+    const canReveal = q.game!=="find" || q.a;
+    stage=`<div class="stage-inner">${gameHtml()}</div>
+      <div class="controls">
+        <button class="btn" data-act="prev" ${S.idx===0?"disabled":""}>◀ Previous</button>
+        ${q.game==="scramble"&&!st.revealed?`<button class="btn" data-act="scr-letter">Show next letter</button><button class="btn ghost" data-act="scr-shuffle">Shuffle</button>`:""}
+        ${q.hint?`<button class="btn ghost" data-act="hint">${st.hint?"Hide clue":"Show clue (free)"}</button>`:""}
+        ${canReveal?`<button class="btn primary" data-act="reveal">${st.revealed?"Hide answer":"Reveal answer"}</button>`:""}
+        ${S.idx<S.questions.length-1?`<button class="btn" data-act="next">Next ▶</button>`:`<button class="btn primary" data-act="finish">Final scores 🏆</button>`}
+      </div>`;
+  }
+  return `<div class="play">
+    <div class="topbar">
+      <div class="where"><div class="round">${roundLabel}<em>${info.name}</em></div><div class="muted small">Question ${S.idx+1} of ${S.questions.length}</div></div>
+      <select class="field small" id="jump" aria-label="Jump to question">${jump}</select>
+      <button class="btn ghost" data-act="setup">⚙ Setup</button>
+      <button class="btn ghost" data-act="fullscreen">⛶ Full screen</button>
+      <button class="btn" data-act="finish">🏆 Final scores</button>
+    </div>
+    <div class="main">
+      <div class="stage">${stage}</div>
+      <aside class="board"><h3>Scoreboard</h3>${teamBoard()}<div class="legend">Open Help to use or return a joker.</div></aside>
+    </div>
+  </div>`;
+}
+
+function renderEnd(){
+  const sorted=S.teams.map((t,i)=>({...t,i})).sort((a,b)=>b.score-a.score);
+  const order=[1,0,2].filter(k=>sorted[k]);
+  const heights={0:220,1:160,2:120};
+  const pods=order.map(k=>{ const t=sorted[k]; const place=sorted.findIndex(x=>x.score===t.score)+1;
+    return `<div class="pod" style="--tc:${t.color}"><div class="n">${esc(t.name)}</div><div class="s">${fmtNum(t.score)} pts</div><div class="bar" style="height:${heights[k]}px">${place}</div></div>`; }).join("");
+  const rest=sorted.slice(3).map((t,k)=>`<span class="chip" style="font-size:16px">${k+4}. ${esc(t.name)} · ${fmtNum(t.score)}</span>`).join("");
+  const winners=sorted.filter(t=>t.score===sorted[0].score).map(t=>esc(t.name)).join(" & ");
+  return `<div class="end">
+    <h1>🏆 <span>${winners}</span> win${sorted.filter(t=>t.score===sorted[0].score).length>1?"":"s"}!</h1>
+    <div style="display:grid;gap:24px;align-content:center"><div class="podium">${pods}</div><div class="rest">${rest}</div></div>
+    <div class="row"><button class="btn" data-act="back-game">◀ Back to the game</button><button class="btn ghost" data-act="setup">⚙ Setup</button></div>
+  </div>`;
+}
+
+/* ---------- confetti ---------- */
+function confetti(){
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv=$("#confetti"); cv.hidden=false; const ctx=cv.getContext("2d");
+  cv.width=innerWidth; cv.height=innerHeight;
+  const P=Array.from({length:220},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height,vx:(Math.random()-.5)*2,vy:2+Math.random()*3,r:Math.random()*6.28,vr:(Math.random()-.5)*.2,c:TEAM_COLORS[Math.floor(Math.random()*TEAM_COLORS.length)],w:6+Math.random()*8,h:8+Math.random()*10}));
+  const end=Date.now()+6000;
+  (function frame(){
+    ctx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; if(p.y>cv.height+20 && Date.now()<end-1500){p.y=-20;p.x=Math.random()*cv.width;} ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore(); });
+    if(Date.now()<end) requestAnimationFrame(frame); else { ctx.clearRect(0,0,cv.width,cv.height); cv.hidden=true; }
+  })();
+}
+
+/* ---------- events ---------- */
+let resetArmed=false;
+document.addEventListener("click", async e=>{
+  const b=e.target.closest("[data-act]"); if(!b||b.disabled) return;
+  const act=b.dataset.act, i=b.dataset.i!=null?+b.dataset.i:null;
+  const st = S.phase==="play" ? QS() : null;
+  switch(act){
+    case "start": S.phase="play"; if(S.idx>=S.questions.length) S.idx=0; resetTimer(); break;
+    case "setup": S.phase="setup"; break;
+    case "reset":
+      if(!resetArmed){ resetArmed=true; b.textContent="Click again to reset"; setTimeout(()=>{resetArmed=false; const r=$("#reset-btn"); if(r) r.textContent="Reset scores";},3000); return; }
+      resetArmed=false; S.teams.forEach(t=>{t.score=0;t.used={};}); S.qs={}; S.idx=0; toast("Scores and jokers reset"); break;
+    case "team-add": { const n=S.teams.length; S.teams.push({name:"Team "+(n+1),color:TEAM_COLORS[n%TEAM_COLORS.length],score:0,used:{}}); break; }
+    case "team-del": S.teams.splice(i,1); Object.values(S.qs).forEach(q=>{ q.guesses={}; q.awarded={}; }); break;
+    case "team-color": { const t=S.teams[i]; const k=TEAM_COLORS.indexOf(t.color); t.color=TEAM_COLORS[(k+1)%TEAM_COLORS.length]; break; }
+    case "joker-add": S.jokers.push({id:"j"+Date.now(),icon:"⭐",name:"New joker",cost:1,hint:false}); break;
+    case "joker-del": S.jokers.splice(i,1); break;
+    case "load-sample": S.questions=parseQuestions(SAMPLE); S.source="Sample questions"; S.qs={}; S.idx=0; break;
+    case "load-paste": {
+      const qs=parseQuestions($("#paste-box").value);
+      if(!qs.length){ toast("No questions found in the pasted text"); return; }
+      S.questions=qs; S.source="Pasted from sheet"; S.qs={}; S.idx=0; break;
+    }
+    case "load-sheet": {
+      const url=$("#sheet-url").value.trim(); S.sheetUrl=url;
+      const stEl=$("#load-status"); stEl.className="status"; stEl.textContent="Loading from Google Sheets…"; b.disabled=true;
+      try{
+        const text=await fetchSheetCsv(url);
+        useQuestions(text,"Loaded from Google Sheet at "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
+        render(); const s2=$("#load-status"); if(s2) s2.className="status ok"; return;
+      }catch(err){ b.disabled=false; stEl.className="status err"; stEl.textContent=err.message; return; }
+    }
+    case "intro-done": st.introDone=true; resetTimer(); break;
+    case "prev": go(S.idx-1); return;
+    case "next": go(S.idx+1); return;
+    case "reveal":
+      st.revealed=!st.revealed;
+      if(st.revealed&&Q().game==="price"){
+        const winners=awardClosest(st);
+        st.resolved=true;
+        if(!winners) toast("No guesses entered yet");
+      }
+      if(st.revealed&&Q().game==="or"){
+        st.resolved=true;
+        if(!syncOrAwards(st)) toast("Mark the teams that answered correctly");
+      }
+      break;
+    case "hint": st.hint=!st.hint; break;
+    case "mark-correct":
+      st.correct=st.correct||{};
+      st.correct[i]=!st.correct[i];
+      if(st.resolved) syncOrAwards(st);
+      break;
+    case "chaos-steal": chaosSteal(i,st); break;
+    case "award": award(i); break;
+    case "award-closest": awardClosest(st); break;
+    case "plus": S.teams[i].score++; bump(i); break;
+    case "minus": S.teams[i].score--; break;
+    case "joker": useJoker(i,b.dataset.j); break;
+    case "letter": guessLetter(b.dataset.l); return;
+    case "scr-letter": { const max=Q().a.replace(/\s/g,"").length; if(st.shown<max-1) st.shown++; else st.revealed=true; break; }
+    case "scr-shuffle": st.scr=scramble(Q().a); break;
+    case "timer": toggleTimer(); return;
+    case "timer-reset": clearInterval(T.iv); T.running=false; T.left=T.total; paintTimer(); return;
+    case "fullscreen": try{ if(document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); }catch(err){ toast("Full screen isn't allowed here. Try your browser's full screen (F11)."); } return;
+    case "finish": S.phase="end"; save(); render(); confetti(); return;
+    case "back-game": S.phase="play"; break;
+  }
+  save(); render();
+});
+function guessLetter(l){
+  const q=Q(), st=QS(); if(q.game!=="hangman") return;
+  const h0=hangInfo(q,st); if(st.letters.includes(l)||h0.solved||h0.lost||st.revealed) return;
+  st.letters.push(l);
+  if(!h0.letters.has(l)) st.turn=(st.turn+1)%S.teams.length;
+  save(); render();
+}
+document.addEventListener("input", e=>{
+  const el=e.target, k=el.dataset.input, i=+el.dataset.i; if(!k) return;
+  if(k==="team-name") S.teams[i].name=el.value;
+  else if(k==="joker-icon") S.jokers[i].icon=el.value;
+  else if(k==="joker-name"){ S.jokers[i].name=el.value; S.jokers[i].hint=/clue|hint|pista/i.test(el.value); }
+  else if(k==="joker-cost") S.jokers[i].cost=parseNum(el.value)||0;
+  else if(k==="currency") S.currency=el.value;
+  else if(k==="guess"){ QS().guesses[i]=el.value; }
+  save();
+});
+document.addEventListener("change", e=>{
+  if(e.target.id==="jump"){ go(+e.target.value); }
+  if(e.target.id==="csv-input" && e.target.files.length) loadCsvFile(e.target.files[0]);
+  if(e.target.id==="sheet-url"){ S.sheetUrl=e.target.value; save(); }
+});
+document.addEventListener("keydown", e=>{
+  if(S.phase!=="play") return;
+  if(e.target.matches("input,textarea,select")) return;
+  if(e.target.matches("button,label") && (e.key==="Enter"||e.key===" ")) return;
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  const st=QS();
+  if(isRoundStart(S.idx)&&!st.introDone){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); st.introDone=true; save(); render(); } return; }
+  if(e.key==="ArrowRight"){ go(S.idx+1); }
+  else if(e.key==="ArrowLeft"){ go(S.idx-1); }
+  else if(e.key==="Enter"){ e.preventDefault(); st.revealed=!st.revealed; save(); render(); }
+  else if(Q().game==="hangman" && e.key.length===1 && isLetter(e.key)){ guessLetter(letterKey(e.key)); }
+});
+
+async function loadCsvFile(f){
+  try{ const n=useQuestions(await f.text(),"Loaded from "+f.name); render(); toast(n+" questions loaded from "+f.name); }
+  catch(err){ toast(err.message); }
+}
+document.addEventListener("dragover",e=>{ e.preventDefault(); });
+document.addEventListener("drop",e=>{ e.preventDefault(); const f=e.dataTransfer.files[0]; if(f) loadCsvFile(f); });
+
+render();
+// If the page is served from a folder that has questions.csv next to it, load it automatically.
+// (Opening the page by double-click blocks this in most browsers: use "Open a CSV file…" or the Google Sheet then.)
+if(S.phase==="setup"){
+  fetch("questions.csv",{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject()).then(t=>{
+    try{ useQuestions(t,"Loaded questions.csv from this folder"); render(); }catch(e){}
+  }).catch(()=>{});
+}
+})();
+</script>
+</body>
+</html>
