@@ -317,8 +317,12 @@ h1,h2,h3{letter-spacing:0}
 .or-choice{flex:1;min-width:0;padding:24px 18px;background:#2868a8;color:#fffaf0;border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font-family:var(--display);font-size:clamp(24px,4vw,48px);overflow-wrap:anywhere}
 .or-choice.correct{background:#25734b}
 .or-word{align-self:center;color:var(--accent);font-family:var(--display);font-size:20px}
-.or-status,.chaos-status{background:var(--panel-2);border-left:5px solid var(--accent);padding:10px 14px;font-weight:700}
-.chaos-status{font-size:16px}
+.or-status,.bonus-status{background:var(--panel-2);border-left:5px solid var(--accent);padding:10px 14px;font-weight:700}
+.bonus-status{font-size:16px}
+.bonus-clues{display:grid;gap:12px;width:min(760px,100%);text-align:left}
+.bonus-clue{padding:14px 18px;background:var(--panel);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font-size:22px}
+.bonus-clue b{display:block;color:var(--accent);font-size:13px;text-transform:uppercase}
+.bonus-reveal{font-size:20px;justify-self:center}
 .joker-menu{padding-left:6px}
 .joker-menu summary{cursor:pointer;list-style:none;color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase}
 .joker-menu summary::-webkit-details-marker{display:none}
@@ -360,7 +364,7 @@ const GAMES = {
   hangman:  {name:"Hangman",             rules:"Teams take turns calling a letter. A right letter means you go again. Seven wrong letters and the pot breaks! Solve the word to win the points."},
   scramble: {name:"Scrambled Words",     rules:"Unscramble the letters. The first team to call out the right word wins the points."},
   or:       {name:"This or That",        rules:"Ask the birthday person's preference. Mark each team that guessed correctly, then reveal the answer to split the points."},
-  chaos:    {name:"Chaos Agent",         rules:"The lowest-scoring team gets one last answer. If correct, they steal the points from the leader. Tied lowest teams all get a chance."},
+  bonus:    {name:"Bonus",               rules:"Only the two lowest-scoring teams can play. Three clues are revealed one at a time; the first correct answer wins the most points for answering earliest."},
   price:    {name:"Guess the Price",     rules:"Take a good look at the piece and write down your price. The closest team wins."},
   count:    {name:"Count It",            rules:"Go and count! Write down your number. The closest team wins."},
   find:     {name:"Find It",             rules:"Run! The first team to bring it back wins the points."}
@@ -385,8 +389,8 @@ const SAMPLE = `Round,Game,Question,Answer,Options,Hint,Points,Image,Time
 6,count,How many plants are in the apartment?,23,,,3,,120
 7,find,Find something made by the birthday girl that is green!,,,,3,,90
 7,find,Bring a photo of the birthday girl as a child!,,,,3,,120
-8,chaos,What is the Japanese art of repairing pottery with gold?,Kintsugi,,,3,,
-9,chaos,What do potters call the oven used to fire clay?,Kiln,,,3,,`;
+8,bonus,What is the Japanese art of repairing pottery with gold?,Kintsugi,,A Japanese repair technique|It uses gold to join broken pieces|It begins with K,3,,
+9,bonus,What do potters call the oven used to fire clay?,Kiln,,It gets very hot|Potters fire their work inside it|It begins with K,3,,`;
 
 /* ---------- state ---------- */
 function defaultState(){
@@ -409,11 +413,11 @@ function defaultState(){
 let S;
 try{ S = JSON.parse(localStorage.getItem(STORE_KEY)); }catch(e){ S = null; }
 if(!S || !Array.isArray(S.questions)) S = defaultState();
-S.questions.forEach(q=>{ if(q.game==="finish") q.game="or"; });
+S.questions.forEach(q=>{ if(q.game==="finish") q.game="or"; else if(q.game==="chaos") q.game="bonus"; });
 function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
 
 function Q(){ return S.questions[S.idx]; }
-function QS(i){ i = (i==null)?S.idx:i; if(!S.qs[i]) S.qs[i]={revealed:false,resolved:false,correct:{},chaosResult:null,hint:false,letters:[],turn:0,guesses:{},awarded:{},scr:null,shown:0,introDone:false}; return S.qs[i]; }
+function QS(i){ i = (i==null)?S.idx:i; if(!S.qs[i]) S.qs[i]={revealed:false,resolved:false,correct:{},bonusClue:0,bonusEligible:null,bonusWinner:null,bonusAward:0,hint:false,letters:[],turn:0,guesses:{},awarded:{},scr:null,shown:0,introDone:false}; return S.qs[i]; }
 
 /* ---------- helpers ---------- */
 const $ = s=>document.querySelector(s);
@@ -432,7 +436,7 @@ function normGame(g){
   if(/hang/.test(g)) return "hangman";
   if(/scram|anagram|unscr/.test(g)) return "scramble";
   if(/^(or|either|either\/or|this or that)$/.test(g)) return "or";
-  if(/chaos/.test(g)) return "chaos";
+  if(/chaos|bonus/.test(g)) return "bonus";
   if(/price|cost/.test(g)) return "price";
   if(/count|how many|number|estimat/.test(g)) return "count";
   if(/find|hunt|search|bring/.test(g)) return "find";
@@ -611,27 +615,24 @@ function syncOrAwards(st){
   winners.forEach((i,n)=>{ const share=(base+(n<remainder?1:0))/100; st.awarded[i]=share; S.teams[i].score+=share; bump(i); });
   return winners.length;
 }
-function chaosStandings(){
-  const scores=S.teams.map(t=>t.score), min=Math.min(...scores), max=Math.max(...scores);
-  return {trailing:scores.map((score,i)=>score===min?i:-1).filter(i=>i>=0),leader:scores.findIndex(score=>score===max),canSteal:max>min};
+function bonusTeams(st){
+  if(!Array.isArray(st.bonusEligible)) st.bonusEligible=S.teams.map((team,i)=>({i,score:team.score})).sort((a,b)=>a.score-b.score||a.i-b.i).slice(0,2).map(x=>x.i);
+  return st.bonusEligible;
 }
-function chaosSteal(ti,st){
-  if(st.chaosResult){
-    if(st.chaosResult.winner!==ti) return;
-    S.teams[st.chaosResult.winner].score-=st.chaosResult.amount;
-    S.teams[st.chaosResult.leader].score+=st.chaosResult.amount;
-    st.chaosResult=null;
-    toast("Chaos Agent steal undone");
-    return;
-  }
-  const standings=chaosStandings();
-  if(!st.revealed||!standings.canSteal||!standings.trailing.includes(ti)) return;
-  const amount=Q().points;
-  S.teams[ti].score+=amount;
-  S.teams[standings.leader].score-=amount;
-  st.chaosResult={winner:ti,leader:standings.leader,amount};
-  bump(ti);
-  toast(`${S.teams[ti].name} stole ${fmtNum(amount)} points from ${S.teams[standings.leader].name}`);
+function bonusPoints(st){ return Math.max(1,(+Q().points||1)-Math.max(0,st.bonusClue-1)); }
+function bonusScore(i,st){
+  if(st.bonusWinner!=null||st.revealed||st.bonusClue<1||!bonusTeams(st).includes(i)) return;
+  st.bonusAward=bonusPoints(st);
+  st.bonusWinner=i;
+  S.teams[i].score+=st.bonusAward;
+  bump(i);
+  toast(`${S.teams[i].name} wins ${fmtNum(st.bonusAward)} bonus points`);
+}
+function undoBonusScore(st){
+  if(st.bonusWinner==null) return;
+  S.teams[st.bonusWinner].score-=st.bonusAward;
+  st.bonusWinner=null;
+  st.bonusAward=0;
 }
 let bumped=-1; function bump(i){ bumped=i; }
 function useJoker(ti,jid){
@@ -709,10 +710,11 @@ function renderSetup(){
         <details>
           <summary>How to fill in the sheet</summary>
           <ul class="steps" style="margin-top:10px">
-            <li><b>Game</b>: trivia, hangman, scramble, or, chaos, price, count or find. Add one or two chaos questions for comeback rounds.</li>
+            <li><b>Game</b>: trivia, hangman, scramble, or, bonus, price, count or find.</li>
             <li><b>Options</b>: trivia choices, or two choices for an or question, separated by | (example: Doner|Pizza).</li>
+            <li><b>Bonus</b>: only the two lowest-scoring teams play. Put three clues in Hint, separated by |. Points starts at the listed value and drops by one per clue.</li>
             <li><b>Hint</b>: shown when a team uses the Clue joker.</li>
-            <li><b>Points</b>: points for the winner(s); or rounds split these points across correct teams, chaos rounds steal them from the leader.</li>
+            <li><b>Points</b>: points for the winner(s); or rounds split points across correct teams; bonus rounds award fewer points for each revealed clue.</li>
             <li><b>Image</b>: a photo file name in the same folder as this page (example: photos/lisbon.jpg), or a Google Drive photo link.</li>
             <li><b>Time</b>: seconds for the countdown (optional, great for count and find).</li>
             <li><b>price / count</b>: put only the number in Answer. The closest guess wins.</li>
@@ -744,11 +746,11 @@ function teamBoard(){
   const st=QS(), q=Q();
   const max=Math.max(...S.teams.map(t=>t.score));
   const anyScore=S.teams.some(t=>t.score!==0);
-  const standings=q.game==="chaos"?chaosStandings():null;
+  const eligible=q.game==="bonus"?bonusTeams(st):[];
   return S.teams.map((t,i)=>`<div class="team ${anyScore&&t.score===max?"lead":""}" style="--tc:${t.color}">
     <div class="top"><div class="name">${esc(t.name)}</div><div class="score ${bumped===i?"bump":""}">${fmtNum(t.score)}</div></div>
     <div class="acts">
-      ${q.game==="price"?(st.resolved&&st.awarded[i]?`<span class="winner-mark">Closest</span>`:""):q.game==="or"?`<button class="btn award ${st.correct&&st.correct[i]?"on":""}" data-act="mark-correct" data-i="${i}">${st.correct&&st.correct[i]?"✓ Correct":"Mark correct"}</button>`:q.game==="chaos"?(st.chaosResult?(st.chaosResult.winner===i?`<button class="btn award on" data-act="chaos-steal" data-i="${i}">Undo steal</button>`:""):standings.canSteal&&standings.trailing.includes(i)&&st.revealed?`<button class="btn primary" data-act="chaos-steal" data-i="${i}">Steal ${fmtNum(q.points)} from ${esc(S.teams[standings.leader].name)}</button>`:""):`<button class="btn award ${st.awarded[i]?"on":""}" data-act="award" data-i="${i}" title="Give this question's points">${st.awarded[i]?"✓ ":""}+${fmtNum(q.points)} correct</button>`}
+      ${q.game==="price"?(st.resolved&&st.awarded[i]?`<span class="winner-mark">Closest</span>`:""):q.game==="or"?`<button class="btn award ${st.correct&&st.correct[i]?"on":""}" data-act="mark-correct" data-i="${i}">${st.correct&&st.correct[i]?"✓ Correct":"Mark correct"}</button>`:q.game==="bonus"?(st.bonusWinner===i?`<button class="btn award on" data-act="bonus-undo">Undo +${fmtNum(st.bonusAward)}</button>`:eligible.includes(i)?(!st.revealed&&st.bonusClue>0&&st.bonusWinner==null?`<button class="btn primary" data-act="bonus-score" data-i="${i}">Correct · +${fmtNum(bonusPoints(st))}</button>`:`<span class="winner-mark">Eligible</span>`):`<span class="muted small">Not playing</span>`):`<button class="btn award ${st.awarded[i]?"on":""}" data-act="award" data-i="${i}" title="Give this question's points">${st.awarded[i]?"✓ ":""}+${fmtNum(q.points)} correct</button>`}
       <button class="btn icon-btn" style="width:32px;height:32px" data-act="minus" data-i="${i}" aria-label="Minus 1 point for ${esc(t.name)}">−</button>
       <button class="btn icon-btn" style="width:32px;height:32px" data-act="plus" data-i="${i}" aria-label="Plus 1 point for ${esc(t.name)}">+</button>
     </div>
@@ -760,11 +762,12 @@ function timerHtml(big){
   if(!Q().time) return "";
   return `<div class="timer ${big?"big":""}" id="timer"><span class="t">0</span><button class="btn primary" data-act="timer">Start</button><button class="btn ghost" data-act="timer-reset" aria-label="Reset timer">↺</button></div>`;
 }
+function bonusClues(q){ return String(q.hint||"").split("|").map(x=>x.trim()).filter(Boolean).slice(0,3); }
 
 function gameHtml(){
   const q=Q(), st=QS(), g=q.game;
   const photo = q.image ? photoHtml(q.image) : "";
-  const hint = st.hint && q.hint ? `<div class="hint">💡 ${esc(q.hint)}</div>` : (st.hint && !q.hint ? `<div class="hint">No clue written for this question</div>` : "");
+  const hint = g!=="bonus"&&st.hint&&q.hint ? `<div class="hint">💡 ${esc(q.hint)}</div>` : (g!=="bonus"&&st.hint&&!q.hint ? `<div class="hint">No clue written for this question</div>` : "");
   const ans = st.revealed && q.a ? `<div><div class="answer-label">Answer</div><div class="answer">${esc(g==="price"?q.a+" "+S.currency:q.a)}</div></div>` : "";
 
   if(g==="trivia"){
@@ -786,11 +789,12 @@ function gameHtml(){
     const result=st.resolved?`<div class="or-status">${correctCount?`${fmtNum(q.points/correctCount)} points each · ${correctCount} correct`:`No teams marked correct`}</div>`:`<div class="or-status">${fmtNum(q.points)} points shared by all correct teams</div>`;
     return `<div class="question">${esc(prompt)}</div>${choiceHtml}${(!hasChoices||!choices.some(matchesChoice))&&st.revealed?ans:""}${result}${photo}${hint}${timerHtml()}`;
   }
-  if(g==="chaos"){
-    const standings=chaosStandings();
-    const trailing=standings.trailing.map(i=>esc(S.teams[i].name)).join(", ");
-    const status=st.chaosResult?`${esc(S.teams[st.chaosResult.winner].name)} stole ${fmtNum(st.chaosResult.amount)} points from ${esc(S.teams[st.chaosResult.leader].name)}.`:standings.canSteal?`Trailing: ${trailing} · Leader: ${esc(S.teams[standings.leader].name)} · Stake: ${fmtNum(q.points)} points`:`Scores are tied; there is no leader to steal from.`;
-    return `<div class="qtag">Chaos Agent</div><div class="question">${esc(q.q)}</div><div class="chaos-status">${status}</div>${ans}${photo}${hint}${timerHtml()}`;
+  if(g==="bonus"){
+    const clues=bonusClues(q), eligible=bonusTeams(st).map(i=>esc(S.teams[i].name)).join(" and ");
+    const visibleClues=clues.slice(0,st.bonusClue).map((clue,i)=>`<div class="bonus-clue"><b>Clue ${i+1}</b>${esc(clue)}</div>`).join("");
+    const status=st.bonusWinner!=null?`${esc(S.teams[st.bonusWinner].name)} wins ${fmtNum(st.bonusAward)} points.`:st.revealed?"No correct answer; no points awarded.":st.bonusClue?`Clue ${st.bonusClue} of ${clues.length} · ${fmtNum(bonusPoints(st))} points for a correct answer`: `Only ${eligible} can play · reveal a clue to start`;
+    const revealClue=!st.revealed&&st.bonusWinner==null&&st.bonusClue<clues.length?`<button class="btn primary big bonus-reveal" data-act="bonus-clue">Reveal clue ${st.bonusClue+1} · ${fmtNum(Math.max(1,(+q.points||1)-st.bonusClue))} pts</button>`:"";
+    return `<div class="qtag">Bonus Round</div><div class="question">${esc(q.q)}</div><div class="bonus-status">${status}</div>${revealClue}<div class="bonus-clues">${visibleClues}</div>${ans}${photo}${timerHtml()}`;
   }
   if(g==="hangman"){
     const h=hangInfo(q,st); const show=st.revealed||h.lost;
@@ -849,7 +853,7 @@ function renderPlay(){
   const q=Q(), st=QS(), info=GAMES[q.game];
   if(T.idx!==S.idx) resetTimer();
   const roundLabel = q.round ? `Round ${esc(q.round)} · ` : "";
-  const showIntro = isRoundStart(S.idx) && !st.introDone;
+  const showIntro = q.game!=="bonus" && isRoundStart(S.idx) && !st.introDone;
   const jump=S.questions.map((x,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>${i+1}. ${GAMES[x.game].name}: ${esc(x.q.slice(0,40))}</option>`).join("");
   let stage;
   if(showIntro){
@@ -962,7 +966,11 @@ document.addEventListener("click", async e=>{
       st.correct[i]=!st.correct[i];
       if(st.resolved) syncOrAwards(st);
       break;
-    case "chaos-steal": chaosSteal(i,st); break;
+    case "bonus-clue":
+      if(Q().game==="bonus"&&!st.revealed&&st.bonusWinner==null&&st.bonusClue<bonusClues(Q()).length) st.bonusClue++;
+      break;
+    case "bonus-score": bonusScore(i,st); break;
+    case "bonus-undo": undoBonusScore(st); break;
     case "award": award(i); break;
     case "award-closest": awardClosest(st); break;
     case "plus": S.teams[i].score++; bump(i); break;
